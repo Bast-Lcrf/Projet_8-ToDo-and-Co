@@ -110,12 +110,43 @@ class TaskController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_task_delete', methods: ['POST'])]
-    public function delete(Request $request, Task $task, TaskRepository $taskRepository): Response
+    public function delete(
+        Request $request,
+        Task $task,
+        TaskRepository $taskRepository
+    ): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$task->getId(), $request->request->get('_token'))) {
-            $taskRepository->remove($task, true);
+        $user = $this->getUser();
+        
+        if($user == $task->getUser()) {
+            if ($this->isCsrfTokenValid('delete'.$task->getId(), $request->request->get('_token'))) {
+                $taskRepository->remove($task, true);
+            }
+            $this->addFlash(
+                'success',
+                'La tâche a bien été supprimé !'
+            );
+        } elseif($task->getUser() == null) {
+            if($this->getUser()->getRoles() == ["ROLE_ADMIN","ROLE_USER"]) {
+                if ($this->isCsrfTokenValid('delete'.$task->getId(), $request->request->get('_token'))) {
+                    $taskRepository->remove($task, true);
+                }
+                $this->addFlash(
+                    'success',
+                    'Admin a bien supprimé la tâche de "Anonyme" !'
+                );
+            } else {
+                $this->addFlash(
+                    'error',
+                    'Vous n\'avez pas les droits pour supprimer une tache "Anonyme" !'
+                );
+            }
+        } else {
+            $this->addFlash(
+                'error', 
+                'Vous n\'êtes pas propriétaire de cette tâche, vous ne pouvez donc pas la supprimer !'
+            );
         }
-
-        return $this->redirectToRoute('app_task_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_task_list', [], Response::HTTP_SEE_OTHER);
     }
 }
