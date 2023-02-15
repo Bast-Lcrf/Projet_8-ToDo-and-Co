@@ -5,20 +5,24 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Mime\Message;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/user')]
 class UserController extends AbstractController
 {
-    #[Route('/', name: 'app_user_index', methods: ['GET'])]
+    #[Route('/list', name: 'app_user_index', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisant pour accéder a cette page !')]
     public function index(UserRepository $userRepository): Response
     {
-        return $this->render('Resources/views/user/list.html.twig', [
+        return $this->render('user/list.html.twig', [
             'user' => $userRepository->findAll(),
         ]);
     }
@@ -35,18 +39,27 @@ class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Récupération des roles
             $roles = $form->get('roles')->getData();
+            if($roles == 'Utilisateur') {
+                $user->setRoles(['ROLE_USER']);
+            } else {
+                $user->setRoles(['ROLE_ADMIN']);
+            }
+
+            // Récupération et hash du mot de passe
             $plainPassword = $form->get('plainPassword')->getData();
             $password = $hasher->hashPassword($user, $plainPassword);
             $user->setPassword($password);
-            $user->setRoles([$roles]);
+
+            // On envoie dans la BDD
             $em->persist($user);
             $em->flush();
 
             return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->renderForm('Resources/views/user/create.html.twig', [
+        return $this->renderForm('user/create.html.twig', [
             'user' => $user,
             'form' => $form,
         ]);
@@ -61,13 +74,34 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, User $user, UserRepository $userRepository): Response
+    public function edit(
+        Request $request,
+        User $user,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $hasher
+    ): Response
     {
         $form = $this->createForm(UserType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $userRepository->save($user, true);
+            // Récupération des roles
+            $roles = $form->get('roles')->getData();
+            if($roles == 'Utilisateur') {
+                $user->setRoles(['ROLE_USER']);
+            } else {
+                $user->setRoles(['ROLE_ADMIN']);
+            }
+
+            // Récupération et hash du mot de passe
+            $plainPassword = $form->get('plainPassword')->getData();
+            $password = $hasher->hashPassword($user, $plainPassword);
+            $user->setPassword($password);
+
+            // On envoie dans la BDD
+            $em->persist($user);
+            $em->flush();
 
             return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
         }
