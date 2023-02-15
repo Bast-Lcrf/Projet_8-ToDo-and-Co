@@ -75,9 +75,10 @@ class UserType extends AbstractType
                 'label_attr' => [
                     'class' => 'form-label mt-4 mb-4'
                 ],
+                'mapped' => false,
                 'choices' => [
-                    'Utilisateur' => '[ROLE_USER]',
-                    'Admin' => '[ROLE_ADMIN]'
+                    'Utilisateur' => 'Utilisateur',
+                    'Admin' => 'Admin'
                 ]
             ])
         ;

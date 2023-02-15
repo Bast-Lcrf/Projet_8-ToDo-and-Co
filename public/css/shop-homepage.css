@@ -14,6 +14,15 @@ body {
     margin-bottom: 2%;
     margin-left: 2.4%;
 }
+.btn-edit-user {
+    text-decoration: none;
+    text-align: center;
+    color: black;
+    text-transform: uppercase;
+}
+.btn-edit-user:hover {
+    color: blue;
+}
 .bx-check {
     width: 200px;
     height: 25px;
