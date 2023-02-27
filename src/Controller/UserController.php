@@ -75,7 +75,6 @@ class UserController extends AbstractController
     public function edit(
         Request $request,
         User $user,
-        UserRepository $userRepository,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher
     ): Response

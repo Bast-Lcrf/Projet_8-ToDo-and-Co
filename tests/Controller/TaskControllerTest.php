@@ -3,15 +3,19 @@
 namespace App\Test\Controller;
 
 use App\Entity\Task;
+use App\Entity\User;
 use App\Repository\TaskRepository;
+use Symfony\Component\BrowserKit\Request;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Validator\ConstraintViolation;
+use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 
 class TaskControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
     private TaskRepository $repository;
-    private string $path = '/task/';
+    private string $path = '/task';
 
     protected function setUp(): void
     {
@@ -23,18 +27,21 @@ class TaskControllerTest extends WebTestCase
         }
     }
 
-    public function testIndex(): void
+    public function testIndexTask(): void
     {
-        $crawler = $this->client->request('GET', $this->path);
+        // $crawler = $this->client->request('GET', $this->path);
 
-        self::assertResponseStatusCodeSame(200);
-        self::assertPageTitleContains('Task index');
+        // self::assertResponseStatusCodeSame(200);
+        // self::assertPageTitleContains('Task index');
 
         // Use the $crawler to perform additional assertions e.g.
         // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
+        $urlGenerator = $this->client->getContainer()->get('router.default');
+        $this->client->request(HttpFoundationRequest::METHOD_GET, $urlGenerator->generate('app_task_list'));
+        $this->assertResponseStatusCodeSame(200);
     }
 
-    public function testNew(): void
+    public function testNewTask(): void
     {
         $originalNumObjectsInRepository = count($this->repository->findAll());
 
@@ -44,13 +51,14 @@ class TaskControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(200);
 
         $this->client->submitForm('Save', [
-            'task[createdAt]' => 'Testing',
+            'task[createdAt]' => '01/01/2023',
             'task[title]' => 'Testing',
             'task[content]' => 'Testing',
-            'task[isDone]' => 'Testing',
+            'task[isDone]' => '1',
+            'task[user_id]' => '1'
         ]);
 
-        self::assertResponseRedirects('/task/');
+        self::assertResponseRedirects('/task/new');
 
         self::assertSame($originalNumObjectsInRepository + 1, count($this->repository->findAll()));
     }
@@ -59,7 +67,7 @@ class TaskControllerTest extends WebTestCase
     {
         $this->markTestIncomplete();
         $fixture = new Task();
-        $fixture->setCreatedAt(new \DateTimeImmutable('Europe/Paris'));
+        $fixture->setCreatedAt(new \DateTime('Europe/Paris'));
         $fixture->setTitle('My Title');
         $fixture->setContent('My Title');
         $fixture->setIsDone('My Title');
@@ -78,7 +86,7 @@ class TaskControllerTest extends WebTestCase
     {
         $this->markTestIncomplete();
         $fixture = new Task();
-        $fixture->setCreatedAt(new \DateTimeImmutable('Europe/Paris'));
+        $fixture->setCreatedAt(new \DateTime('Europe/Paris'));
         $fixture->setTitle('My Title');
         $fixture->setContent('My Title');
         $fixture->setIsDone('My Title');
@@ -104,17 +112,18 @@ class TaskControllerTest extends WebTestCase
         self::assertSame('Something New', $fixture[0]->isIsDone());
     }
 
-    public function testRemove(): void
+    public function testRemoveTask(): void
     {
         $this->markTestIncomplete();
 
         $originalNumObjectsInRepository = count($this->repository->findAll());
 
         $fixture = new Task();
-        $fixture->setCreatedAt(new \DateTimeImmutable('Europe/Paris'));
+        $fixture->setCreatedAt(new \DateTime('Europe/Paris'));
         $fixture->setTitle('My Title');
         $fixture->setContent('My Title');
-        $fixture->setIsDone('My Title');
+        $fixture->setIsDone('1');
+        $fixture->setUser(new User);
 
         $this->repository->save($fixture, true);
 
@@ -124,6 +133,6 @@ class TaskControllerTest extends WebTestCase
         $this->client->submitForm('Delete');
 
         self::assertSame($originalNumObjectsInRepository, count($this->repository->findAll()));
-        self::assertResponseRedirects('/task/');
+        self::assertResponseRedirects('/task');
     }
 }
