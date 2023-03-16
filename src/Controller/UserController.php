@@ -16,8 +16,16 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 #[Route('/user')]
 class UserController extends AbstractController
 {
+    /**
+     * This controller allows us to list all registered users.
+     * Restriction : Admins access only
+     *
+     * @param  UserRepository $userRepository
+     * 
+     * @return Response
+     */
     #[Route('/list', name: 'app_user_index', methods: ['GET'])]
-    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisant pour accéder a cette page !')]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisant pour accéder a cette page !')]    
     public function index(UserRepository $userRepository): Response
     {
         return $this->render('user/list.html.twig', [
@@ -25,7 +33,16 @@ class UserController extends AbstractController
         ]);
     }
 
-    #[Route('/create', name: 'app_user_new', methods: ['GET', 'POST'])]
+    /**
+     * This controller allow us to create a new user
+     *
+     * @param Request $request
+     * @param EntityManagerInterface $em
+     * @param UserPasswordHasherInterface $hasher
+     * 
+     * @return void
+     */
+    #[Route('/create', name: 'app_user_new', methods: ['GET', 'POST'])]   
     public function Create(
         Request $request,
         EntityManagerInterface $em,
@@ -69,7 +86,19 @@ class UserController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
+    /**
+     * This controller allow us edit a user
+     * Restriction : Admins access only
+     *
+     * @param Request $request
+     * @param User $user
+     * @param EntityManagerInterface $em
+     * @param UserPasswordHasherInterface $hasher
+     * 
+     * @return void
+     */
+    #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]  
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisant pour accéder a cette page !')]  
     public function edit(
         Request $request,
         User $user,
@@ -111,9 +140,19 @@ class UserController extends AbstractController
             'form' => $form,
         ]);
     }
-
+ 
+    /**
+     * This controller allow us to delete a user
+     * Restricion: Admins access only
+     *
+     * @param  Request $request
+     * @param  User $user
+     * @param  UserRepository $userRepository
+     * 
+     * @return Response
+     */
     #[Route('/{id}/delete', name: 'app_user_delete', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisant pour accéder a cette page !')]
     public function delete(Request $request, User $user, UserRepository $userRepository): Response
     {
         if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {

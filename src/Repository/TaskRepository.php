@@ -20,7 +20,14 @@ class TaskRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Task::class);
     }
-
+    
+    /**
+     * This method allow us to save a new/an edit task on the database
+     * @param  Task $entity
+     * @param  bool $flush
+     * 
+     * @return void
+     */
     public function save(Task $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
@@ -29,7 +36,15 @@ class TaskRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
-
+    
+    /**
+     * This method allow us to remove a task from the database
+     *
+     * @param  Task $entity
+     * @param  bool $flush
+     * 
+     * @return void
+     */
     public function remove(Task $entity, bool $flush = false): void
     {
         $this->getEntityManager()->remove($entity);

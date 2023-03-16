@@ -6,10 +6,12 @@ use App\Entity\Task;
 use App\Form\TaskType;
 use App\Repository\TaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use phpDocumentor\Reflection\Types\This;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 #[Route('/task')]
 class TaskController extends AbstractController
@@ -17,7 +19,8 @@ class TaskController extends AbstractController
     /**
      * This controller displays the tasks list
      *
-     * @param  mixed $taskRepository
+     * @param  TaskRepository $taskRepository
+     * 
      * @return Response
      */
     #[Route('/list', name: 'app_task_list', methods: ['GET'])] 
@@ -25,6 +28,7 @@ class TaskController extends AbstractController
     {
         return $this->render('task/list.html.twig', [
             'tasks' => $taskRepository->findAll(),
+            'users' => $this->getUser()
         ]);
     }
   
@@ -33,6 +37,7 @@ class TaskController extends AbstractController
      *
      * @param  Request $request
      * @param  TaskRepository $taskRepository
+     * 
      * @return Response
      */
     #[Route('/create', name: 'app_task_create', methods: ['GET', 'POST'])]  
@@ -62,10 +67,11 @@ class TaskController extends AbstractController
     }
 
     /**
-     * This controller allows us to switch a task from completed to not completed
+     * This controller allows us to move a task from a completed state to an uncompleted state (and back again).
      * 
      * @param Task $task
      * @param EntityManagerInterface $em
+     * 
      * @return Response
      */
     #[Route('/{id}/toggle', name: 'app_task_toggle', methods: ['GET'])]    
@@ -96,7 +102,19 @@ class TaskController extends AbstractController
         return $this->redirectToRoute('app_task_list');
     }
 
-    #[Route('/{id}/edit', name: 'app_task_edit', methods: ['GET', 'POST'])]
+      
+    /**
+     * This controller allow us to edit a task
+     * Restrcition : Login required for edit a task
+     *
+     * @param  Request $request
+     * @param  Task $task
+     * @param  TaskRepository $taskRepository
+     * 
+     * @return Response
+     */
+    #[Route('/{id}/edit', name: 'app_task_edit', methods: ['GET', 'POST'])] 
+    #[IsGranted('ROLE_USER')] 
     public function edit(Request $request, Task $task, TaskRepository $taskRepository): Response
     {
         $form = $this->createForm(TaskType::class, $task);
@@ -119,7 +137,17 @@ class TaskController extends AbstractController
         ]);
     }
 
+       
+    /**
+     * This controller allow us to delete a task.
+     * Restriction on connected user
+     * Restriction : the user can only delete tasks that belong to him/her
+     * Restriction : Anonyme task can be only deleted by an Admin
+     *
+     * @return void
+     */
     #[Route('/{id}/delete', name: 'app_task_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_USER', message: 'test de message')]
     public function delete(
         Request $request,
         Task $task,
