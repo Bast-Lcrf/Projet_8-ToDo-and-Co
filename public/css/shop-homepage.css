@@ -9,18 +9,19 @@ body {
 }
 
 .btn {
-    width: 400px;
-    margin-top: 2%;
-    margin-bottom: 2%;
-    margin-left: 2.4%;
+    width: 300px;
+    margin-top: 0.5%;
+    margin-bottom: 0.5%;
+    margin-left: 2%;
 }
-.btn-edit-user {
+.edit-user {
     text-decoration: none;
     text-align: center;
     color: black;
     text-transform: uppercase;
+    background-color: lightblue;
 }
-.btn-edit-user:hover {
+.edit-user:hover {
     color: blue;
 }
 .bx-check {

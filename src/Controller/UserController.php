@@ -6,10 +6,10 @@ use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -25,8 +25,8 @@ class UserController extends AbstractController
         ]);
     }
 
-    #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
-    public function new(
+    #[Route('/create', name: 'app_user_new', methods: ['GET', 'POST'])]
+    public function Create(
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher
@@ -49,25 +49,23 @@ class UserController extends AbstractController
             $plainPassword = $form->get('plainPassword')->getData();
             $password = $hasher->hashPassword($user, $plainPassword);
             $user->setPassword($password);
+            $user->eraseCredentials();
 
             // On envoie dans la BDD
             $em->persist($user);
             $em->flush();
 
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+            $this->addFlash(
+                'success',
+                'L\'utilisateur a bien été créé !'
+            );
+
+            return $this->redirectToRoute('app_task_list', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->renderForm('user/create.html.twig', [
+        return $this->render('user/create.html.twig', [
             'user' => $user,
             'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
-    {
-        return $this->render('user/show.html.twig', [
-            'user' => $user,
         ]);
     }
 
@@ -100,22 +98,32 @@ class UserController extends AbstractController
             $em->persist($user);
             $em->flush();
 
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+            $this->addFlash(
+                'success',
+                'L\'utilisateur a bien été modifié !'
+            );
+
+            return $this->redirectToRoute('app_task_list', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->renderForm('user/edit.html.twig', [
+        return $this->render('user/edit.html.twig', [
             'user' => $user,
             'form' => $form,
         ]);
     }
 
-    #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
+    #[Route('/{id}/delete', name: 'app_user_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(Request $request, User $user, UserRepository $userRepository): Response
     {
         if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
             $userRepository->remove($user, true);
         }
+        $this->addFlash(
+            'success',
+            'L\'utilisateur a bien été suprimé !'
+        );
 
-        return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_task_list', [], Response::HTTP_SEE_OTHER);
     }
 }

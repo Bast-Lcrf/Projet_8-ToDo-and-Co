@@ -24,10 +24,14 @@
                 {% for user in user %}
                     <tr>
                         <th scope="row">{{ loop.index }}</th>
-                        <td>{{ user.username }}</td>
+                        <td class="username">{{ user.username }}</td>
                         <td>{{ user.email }}</td>
                         <td>
-                            <a href="{{ path('app_user_edit', {'id' : user.id}) }}" class="btn-edit-user">Edit</a>
+                            <a href="{{ path('app_user_edit', {'id' : user.id}) }}" class="btn edit-user">Edit</a>
+                            <form class="deleteUser" method="post" action="{{ path('app_user_delete', {id: user.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                                <button class="btn btn-danger">Supprimer</button>
+                            </form>
                         </td>
                     </tr>
                 {% endfor %}

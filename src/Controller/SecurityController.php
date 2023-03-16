@@ -10,13 +10,6 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
-    private UserRepository $userRepository;
-
-    public function __construct(UserRepository $userRepository)
-    {
-        $this->userRepository = $userRepository;
-    }
-
     /**
      * This Controller allow us to login
      *
@@ -37,7 +30,7 @@ class SecurityController extends AbstractController
      *
      * @return void
      */
-    #[Route('/deconnexion', name: 'app_security_logout')]
+    #[Route('/deconnexion', name: 'app_security_logout', methods: ['GET'])]
     public function logout()
     {
         // Nothing to do here..

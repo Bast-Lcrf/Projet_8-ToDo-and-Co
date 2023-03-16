@@ -57,16 +57,6 @@ class UserTest extends KernelTestCase
         $maxSizeUsername = 'aNam et orci vehicula metus semper imperdiet. Suspendisse vulputate feugiat nunc non mollis. Donec gravida odio vel porta sagittis. Duis sed enim sed turpis cursus sagittis blandit.';
         $this->assertHasErrors($this->getEntity()->setUsername($maxSizeUsername), 1);
     }
-
-    public function testInvalidBlankRolesEntity()
-    {
-        $this->assertHasErrors($this->getEntity()->setRoles([]), 1);
-    }
-
-    public function testInvalidBlankPasswordEntity()
-    {
-        $this->assertHasErrors($this->getEntity()->setPassword(''), 1);
-    }
 }
 
 // vendor/bin/phpunit --filter UserTest

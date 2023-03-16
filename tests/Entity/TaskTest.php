@@ -6,10 +6,6 @@ use App\Entity\Task;
 use App\Entity\User;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use SebastianBergmann\CodeCoverage\CodeCoverage;
-use SebastianBergmann\CodeCoverage\Driver\Driver;
-use SebastianBergmann\CodeCoverage\Filter;
-use SebastianBergmann\CodeCoverage\Report\Html\Facade as HtmlReport;
 
 
 class TaskTest extends KernelTestCase
@@ -58,6 +54,3 @@ class TaskTest extends KernelTestCase
         $this->assertHasErrors($this->getEntity()->setContent(''), 1);
     }
 }
-
-// vendor/bin/phpunit --filter TaskTest
-// XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-text
