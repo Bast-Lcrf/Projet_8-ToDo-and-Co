@@ -4,6 +4,19 @@
 
 {% block body %}
     <a href="{{ path('app_task_create') }}" class="btn btn-info pull-right">Créer une tâche</a>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success mt-4">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger mt-4">
+            {{ message }}
+        </div>
+    {% endfor %}
+    
     <div class="row">
         {% for task in tasks %}
         <div class="col-sm-4 col-lg-4 col-md-4">
@@ -27,7 +40,7 @@
                     </h4>
                 </div>
                 <div>
-                    <form action="{{ path('app_task_toggle', {'id' : task.id }) }}">
+                    <form class="toggleTask" action="{{ path('app_task_toggle', {'id' : task.id }) }}">
                         <button class="btn btn-success btn-sm pull-right">
                             {% if not task.isDone %}
                                 Marquer comme faite
@@ -36,7 +49,7 @@
                             {% endif %}
                         </button>
                     </form>
-                    <form method="post" action="{{ path('app_task_delete', {'id' : task.id }) }}">
+                    <form class="deleteTask" method="post" action="{{ path('app_task_delete', {'id' : task.id }) }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ task.id) }}">
                         <button class="btn btn-danger btn-sm pull-right">Supprimer</button>
                     </form>

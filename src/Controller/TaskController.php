@@ -20,7 +20,7 @@ class TaskController extends AbstractController
      * @param  mixed $taskRepository
      * @return Response
      */
-    #[Route('/', name: 'app_task_list', methods: ['GET'])] 
+    #[Route('/list', name: 'app_task_list', methods: ['GET'])] 
     public function index(TaskRepository $taskRepository): Response
     {
         return $this->render('task/list.html.twig', [
@@ -35,8 +35,8 @@ class TaskController extends AbstractController
      * @param  TaskRepository $taskRepository
      * @return Response
      */
-    #[Route('/new', name: 'app_task_create', methods: ['GET', 'POST'])]  
-    public function new(Request $request, TaskRepository $taskRepository): Response
+    #[Route('/create', name: 'app_task_create', methods: ['GET', 'POST'])]  
+    public function Create(Request $request, TaskRepository $taskRepository): Response
     {
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
@@ -46,6 +46,11 @@ class TaskController extends AbstractController
             $user = $this->getUser();
             $task->setUser($user);
             $taskRepository->save($task, true);
+
+            $this->addFlash(
+                'success',
+                'La tache a bien été créé !'
+            );
 
             return $this->redirectToRoute('app_task_list', [], Response::HTTP_SEE_OTHER);
         }
@@ -100,6 +105,11 @@ class TaskController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $taskRepository->save($task, true);
 
+            $this->addFlash(
+                'success',
+                'La tache a bien été modifié !'
+            );
+
             return $this->redirectToRoute('app_task_list', [], Response::HTTP_SEE_OTHER);
         }
 
@@ -109,7 +119,7 @@ class TaskController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_task_delete', methods: ['POST'])]
+    #[Route('/{id}/delete', name: 'app_task_delete', methods: ['POST'])]
     public function delete(
         Request $request,
         Task $task,

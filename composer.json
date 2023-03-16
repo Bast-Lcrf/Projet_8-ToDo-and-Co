@@ -44,6 +44,7 @@
     },
     "require-dev": {
         "doctrine/data-fixtures": "*",
+        "doctrine/doctrine-fixtures-bundle": "^3.4",
         "liip/test-fixtures-bundle": "^2.0.0",
         "phpunit/php-code-coverage": "^9.2",
         "phpunit/phpunit": "^9.6",

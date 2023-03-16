@@ -9,7 +9,6 @@
          convertDeprecationsToExceptions="false"
 >
     <php>
-        <env name="DATABASE_URL" value="mysql://root:root@localhost:8889/ToDoCo_P8?serverVersion=8;charset=utf8mb4" />
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />

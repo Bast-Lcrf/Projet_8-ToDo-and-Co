@@ -4,6 +4,8 @@ namespace App\Test\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -11,119 +13,195 @@ class UserControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
     private UserRepository $repository;
-    private string $path = '/user/';
+    private EntityManagerInterface $em;
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
         $this->repository = static::getContainer()->get('doctrine')->getRepository(User::class);
-
-        foreach ($this->repository->findAll() as $object) {
-            $this->repository->remove($object, true);
-        }
+        $this->em = static::getContainer()->get(EntityManagerInterface::class);
     }
 
-    public function testIndex(): void
+    public function loggedAsAdmin()
     {
-        $crawler = $this->client->request('GET', $this->path);
-
-        self::assertResponseStatusCodeSame(200);
-        self::assertPageTitleContains('User index');
-
-        // Use the $crawler to perform additional assertions e.g.
-        // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
+        $this->getEntityAdmin();
+        $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('Admin');
+        $this->client->loginUser($user);
     }
 
-    public function testNew(): void
+    public function loggedAsUser()
     {
-        $originalNumObjectsInRepository = count($this->repository->findAll());
+        $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('User');
+        $this->client->loginUser($user);
+    }
 
-        $this->markTestIncomplete();
-        $this->client->request('GET', sprintf('%snew', $this->path));
+    public function getEntityUser()
+    {
+        $user = (new User())
+            ->setUsername('User')
+            ->setRoles(['ROLE_USER'])
+            ->setPassword('password')
+            ->setEmail('mailTest@mail.com');
+        $this->repository->save($user, true);
+    }
 
-        self::assertResponseStatusCodeSame(200);
+    public function getEntityAdmin()
+    {
+        $user = (new User())
+            ->setUsername('Admin')
+            ->setRoles(['ROLE_ADMIN'])
+            ->setPassword('password')
+            ->setEmail('AdminMailTest@mail.com');
+        $this->repository->save($user, true);
+    }
 
-        $this->client->submitForm('Save', [
-            'user[username]' => 'Testing',
-            'user[roles]' => 'Testing',
-            'user[password]' => 'Testing',
-            'user[email]' => 'Testing',
+    public function removeUser($name)
+    {
+        $this->em->remove($this->em->getRepository(User::class)->findOneByUsername($name));
+        $this->em->flush();
+    }
+
+    public function testUsersListWithAuthorizedAccess(): void
+    {
+        $this->loggedAsAdmin();
+
+        $this->client->request(Request::METHOD_GET, 'user/list');
+        $this->assertResponseStatusCodeSame(200);
+        $this->assertRouteSame('app_user_index');
+
+        $this->removeUser('Admin');
+    }
+
+    public function testUsersListUnAuthorizedAccess()
+    {
+        $this->getEntityUser();
+
+        $this->loggedAsUser();
+
+        $this->client->request(Request::METHOD_GET, 'user/list');
+        $this->assertResponseStatusCodeSame(403);
+
+        $this->removeUser('User');
+    }
+
+    public function testCreateUser(): void
+    {
+        $crawler = $this->client->request(Request::METHOD_GET, 'user/create');
+        $this->assertRouteSame('app_user_new');
+
+        $form = $crawler->filter('form')->form([
+            'user[username]' => 'TestingUserName',
+            'user[roles]' => "Utilisateur",
+            'user[plainPassword][first]' => 'password',
+            'user[plainPassword][second]' => 'password',
+            'user[email]' => 'testMail@mail.com'
         ]);
+        $this->client->submit($form);
 
-        self::assertResponseRedirects('/user/');
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'L\'utilisateur a bien été créé !');
 
-        self::assertSame($originalNumObjectsInRepository + 1, count($this->repository->findAll()));
+        $this->removeUser('TestingUserName');
     }
 
-    public function testShow(): void
+    public function testCreateAdmin(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new User();
-        $fixture->setUsername('My Title');
-        $fixture->setRoles(['ROLE_USER']);
-        $fixture->setPassword('My Title');
-        $fixture->setEmail('My Title');
+        $crawler = $this->client->request(Request::METHOD_GET, 'user/create');
+        $this->assertRouteSame('app_user_new');
 
-        $this->repository->save($fixture, true);
-
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-
-        self::assertResponseStatusCodeSame(200);
-        self::assertPageTitleContains('User');
-
-        // Use assertions to check that the properties are properly displayed.
-    }
-
-    public function testEdit(): void
-    {
-        $this->markTestIncomplete();
-        $fixture = new User();
-        $fixture->setUsername('My Title');
-        $fixture->setRoles(['ROLE_USER']);
-        $fixture->setPassword('My Title');
-        $fixture->setEmail('My Title');
-
-        $this->repository->save($fixture, true);
-
-        $this->client->request('GET', sprintf('%s%s/edit', $this->path, $fixture->getId()));
-
-        $this->client->submitForm('Update', [
-            'user[username]' => 'Something New',
-            'user[roles]' => 'Something New',
-            'user[password]' => 'Something New',
-            'user[email]' => 'Something New',
+        $form = $crawler->filter('form')->form([
+            'user[username]' => 'CreateAdminForTest',
+            'user[roles]' => "Admin",
+            'user[plainPassword][first]' => 'password',
+            'user[plainPassword][second]' => 'password',
+            'user[email]' => 'TestAdminMail@mail.com'
         ]);
+        $this->client->submit($form);
 
-        self::assertResponseRedirects('/user/');
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'L\'utilisateur a bien été créé !');
 
-        $fixture = $this->repository->findAll();
-
-        self::assertSame('Something New', $fixture[0]->getUsername());
-        self::assertSame('Something New', $fixture[0]->getRoles());
-        self::assertSame('Something New', $fixture[0]->getPassword());
-        self::assertSame('Something New', $fixture[0]->getEmail());
+        $this->removeUser('CreateAdminForTest');
     }
 
-    public function testRemove(): void
+    public function testEditUser(): void
     {
-        $this->markTestIncomplete();
+        $this->loggedAsAdmin();
 
-        $originalNumObjectsInRepository = count($this->repository->findAll());
+        $this->getEntityUser();
 
-        $fixture = new User();
-        $fixture->setUsername('My Title');
-        $fixture->setRoles(['ROLE_USER']);
-        $fixture->setPassword('My Title');
-        $fixture->setEmail('My Title');
+        $toEditUser = static::getContainer()->get(UserRepository::class)->findOneByUsername('User');
 
-        $this->repository->save($fixture, true);
+        $crawler = $this->client->request(Request::METHOD_GET, '/user/' . $toEditUser->getId() . '/edit');
 
-        self::assertSame($originalNumObjectsInRepository + 1, count($this->repository->findAll()));
+        $form = $crawler->filter('form')->form([
+            'user[username]' => 'test User edit name',
+            'user[roles]' => "Utilisateur",
+            'user[plainPassword][first]' => 'password',
+            'user[plainPassword][second]' => 'password',
+            'user[email]' => 'test@mail.com'
+        ]);
+        $this->client->submit($form);
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-        $this->client->submitForm('Delete');
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'L\'utilisateur a bien été modifié !');
 
-        self::assertSame($originalNumObjectsInRepository, count($this->repository->findAll()));
-        self::assertResponseRedirects('/user/');
+        $this->removeUser('test User edit name');
+        $this->removeUser('Admin');
+    }
+
+    public function testEditRoleAdmin(): void
+    {
+        $this->loggedAsAdmin();
+
+        $this->getEntityUser();
+
+        $toEditUser = static::getContainer()->get(UserRepository::class)->findOneByUsername('User');
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/user/' . $toEditUser->getId() . '/edit');
+
+        $form = $crawler->filter('form')->form([
+            'user[username]' => 'test User edit name',
+            'user[roles]' => "Admin",
+            'user[plainPassword][first]' => 'password',
+            'user[plainPassword][second]' => 'password',
+            'user[email]' => 'test@mail.com'
+        ]);
+        $this->client->submit($form);
+
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'L\'utilisateur a bien été modifié !');
+
+        $this->removeUser('test User edit name');
+        $this->removeUser('Admin');
+    }
+
+    public function testDeleteUser(): void
+    {
+        $this->loggedAsAdmin();
+        $this->getEntityUser();
+
+        $urlGenerator = $this->client->getContainer()->get('router.default');
+
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_index'));
+
+        $form = $crawler->filter('.deleteUser')->last()->form();
+        $this->client->submit($form);
+
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'L\'utilisateur a bien été suprimé !');
+
+        // $this->removeUser('User');
+        $this->removeUser('Admin');
     }
 }

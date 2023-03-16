@@ -5,134 +5,286 @@ namespace App\Test\Controller;
 use App\Entity\Task;
 use App\Entity\User;
 use App\Repository\TaskRepository;
-use Symfony\Component\BrowserKit\Request;
+use App\Repository\UserRepository;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Validator\ConstraintViolation;
-use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
+use Doctrine\ORM\EntityManagerInterface;
 
 class TaskControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
     private TaskRepository $repository;
-    private string $path = '/task';
+    private EntityManagerInterface $em;
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
         $this->repository = static::getContainer()->get('doctrine')->getRepository(Task::class);
+        $this->em = static::getContainer()->get(EntityManagerInterface::class);
+    }
 
-        foreach ($this->repository->findAll() as $object) {
-            $this->repository->remove($object, true);
-        }
+    public function getEntityAdmin()
+    {
+        $user = (new User())
+            ->setUsername('Admin')
+            ->setRoles(['ROLE_ADMIN'])
+            ->setPassword('0000')
+            ->setEmail('AdminMailTest@mail.com');
+        static::getContainer()->get(UserRepository::class)->save($user, true);
+    }
+
+    public function loggedAsAdmin()
+    {
+        $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('Admin');
+        $this->client->loginUser($user);
+    }
+
+    public function loggedAsUser()
+    {
+        $user = (new User())
+            ->setUsername('User')
+            ->setRoles(['ROLE_USER'])
+            ->setPassword('0000')
+            ->setEmail('mailTest@mail.com');
+        static::getContainer()->get(UserRepository::class)->save($user, true);
+        
+        $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('User');
+        $this->client->loginUser($user);
+    }
+
+    public function removeUser($name)
+    {
+        $this->em->remove($this->em->getRepository(User::class)->findOneByUsername($name));
+        $this->em->flush();
+    }
+
+    public function getAnonymousTask()
+    {
+        $task = new Task();
+        $task->setCreatedAt(new \DateTime('Europe/Paris'));
+        $task->setTitle('titre test');
+        $task->setContent('Contenu test');
+        $task->setIsDone(false);
+        $task->setUser(null);
+        $this->repository->save($task, true);
+    }
+
+    public function getTaskLinkedToAdmin()
+    {
+        $task = new Task();
+        $task->setCreatedAt(new \DateTime('Europe/Paris'));
+        $task->setTitle('AdminTask');
+        $task->setContent('Contenu test');
+        $task->setIsDone(false);
+        $task->setUser($this->em->getRepository(User::class)->findOneByUsername('Admin'));
+        $this->repository->save($task, true);
+    }
+
+    public function removeTask($title)
+    {
+        $this->em->remove($this->em->getRepository(Task::class)->findOneByTitle($title));
+        $this->em->flush();
     }
 
     public function testIndexTask(): void
     {
-        // $crawler = $this->client->request('GET', $this->path);
-
-        // self::assertResponseStatusCodeSame(200);
-        // self::assertPageTitleContains('Task index');
-
-        // Use the $crawler to perform additional assertions e.g.
-        // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
         $urlGenerator = $this->client->getContainer()->get('router.default');
-        $this->client->request(HttpFoundationRequest::METHOD_GET, $urlGenerator->generate('app_task_list'));
+
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_list'));
         $this->assertResponseStatusCodeSame(200);
+        $this->assertRouteSame('app_task_list');
     }
 
-    public function testNewTask(): void
+    public function testCreateTaskLinkedToAdmin(): void
     {
-        $originalNumObjectsInRepository = count($this->repository->findAll());
+        $this->getEntityAdmin();
+        $this->loggedAsAdmin();
 
-        $this->markTestIncomplete();
-        $this->client->request('GET', sprintf('%snew', $this->path));
+        $crawler = $this->client->request(Request::METHOD_GET, '/task/create');
 
-        self::assertResponseStatusCodeSame(200);
-
-        $this->client->submitForm('Save', [
-            'task[createdAt]' => '01/01/2023',
-            'task[title]' => 'Testing',
-            'task[content]' => 'Testing',
-            'task[isDone]' => '1',
-            'task[user_id]' => '1'
+        $form = $crawler->filter('form')->form([
+            'task[createdAt]' => '2023-01-01 12:00:00',
+            'task[title]' => 'testTitleTask',
+            'task[content]' => 'test Content Task',
+            'task[isDone]' => '0'
         ]);
+        $this->client->submit($form);
 
-        self::assertResponseRedirects('/task/new');
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'La tache a bien été créé !');
 
-        self::assertSame($originalNumObjectsInRepository + 1, count($this->repository->findAll()));
+        $this->removeTask('testTitleTask');
+        $this->removeUser('Admin');
     }
 
-    public function testShow(): void
+    public function testCreateTaskAnonymously()
     {
-        $this->markTestIncomplete();
-        $fixture = new Task();
-        $fixture->setCreatedAt(new \DateTime('Europe/Paris'));
-        $fixture->setTitle('My Title');
-        $fixture->setContent('My Title');
-        $fixture->setIsDone('My Title');
+        $crawler = $this->client->request(Request::METHOD_GET, '/task/create');
 
-        $this->repository->save($fixture, true);
-
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-
-        self::assertResponseStatusCodeSame(200);
-        self::assertPageTitleContains('Task');
-
-        // Use assertions to check that the properties are properly displayed.
-    }
-
-    public function testEdit(): void
-    {
-        $this->markTestIncomplete();
-        $fixture = new Task();
-        $fixture->setCreatedAt(new \DateTime('Europe/Paris'));
-        $fixture->setTitle('My Title');
-        $fixture->setContent('My Title');
-        $fixture->setIsDone('My Title');
-
-        $this->repository->save($fixture, true);
-
-        $this->client->request('GET', sprintf('%s%s/edit', $this->path, $fixture->getId()));
-
-        $this->client->submitForm('Update', [
-            'task[createdAt]' => 'Something New',
-            'task[title]' => 'Something New',
-            'task[content]' => 'Something New',
-            'task[isDone]' => 'Something New',
+        $form = $crawler->filter('form')->form([
+            'task[createdAt]' => '2023-01-01 12:00:00',
+            'task[title]' => 'testTitleTask',
+            'task[content]' => 'test Content Task',
+            'task[isDone]' => '1'
         ]);
+        $this->client->submit($form);
 
-        self::assertResponseRedirects('/task/');
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'La tache a bien été créé !');
 
-        $fixture = $this->repository->findAll();
-
-        self::assertSame('Something New', $fixture[0]->getCreatedAt());
-        self::assertSame('Something New', $fixture[0]->getTitle());
-        self::assertSame('Something New', $fixture[0]->getContent());
-        self::assertSame('Something New', $fixture[0]->isIsDone());
+        $this->removeTask('testTitleTask');
     }
 
-    public function testRemoveTask(): void
+    public function testEditTask(): void
     {
-        $this->markTestIncomplete();
+        $this->getAnonymousTask();
 
-        $originalNumObjectsInRepository = count($this->repository->findAll());
+        $toEditTask = static::getContainer()->get(TaskRepository::class)->findOneByTitle('titre test');
 
-        $fixture = new Task();
-        $fixture->setCreatedAt(new \DateTime('Europe/Paris'));
-        $fixture->setTitle('My Title');
-        $fixture->setContent('My Title');
-        $fixture->setIsDone('1');
-        $fixture->setUser(new User);
+        $crawler = $this->client->request(Request::METHOD_GET, '/task/' . $toEditTask->getId() . '/edit');
 
-        $this->repository->save($fixture, true);
+        $form = $crawler->filter('form')->form([
+            'task[createdAt]' => '2023-01-01 14:00:00',
+            'task[title]' => 'Edit du titre test',
+            'task[content]' => 'Edit du contenu test',
+            'task[isDone]' => '1'
+        ]);
+        $this->client->submit($form);
 
-        self::assertSame($originalNumObjectsInRepository + 1, count($this->repository->findAll()));
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'La tache a bien été modifié !');
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-        $this->client->submitForm('Delete');
+        $this->em->remove($this->em->getRepository(Task::class)->findOneByTitle('Edit du titre test'));
+        $this->em->flush();
+    }
 
-        self::assertSame($originalNumObjectsInRepository, count($this->repository->findAll()));
-        self::assertResponseRedirects('/task');
+    public function testToggleTaskToDone()
+    {
+        $this->getAnonymousTask();
+
+        $urlGenerator = $this->client->getContainer()->get('router.default');
+
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_list'));
+        $this->assertResponseStatusCodeSame(200);
+
+        $form = $crawler->selectButton('Marquer comme faite')->form();
+        $this->client->submit($form);
+
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'La tache à bien été marqué comme faite !');
+    }
+
+    public function testToggleTaskToFalse()
+    {
+        $urlGenerator = $this->client->getContainer()->get('router.default');
+
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_list'));
+        $this->assertResponseStatusCodeSame(200);
+
+        $form = $crawler->selectButton('Marquer non terminée')->form();
+        $this->client->submit($form);
+
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'La tache à bien été marqué comme non terminé !');
+
+        $this->removeTask('titre test');
+    }
+
+    public function testAnonymousTaskDeletedByAnAdmin(): void
+    {
+        $this->getAnonymousTask();
+        $this->getEntityAdmin();
+        $this->loggedAsAdmin();
+
+        $urlGenerator = $this->client->getContainer()->get('router.default');
+
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_list'));
+
+        $form = $crawler->filter('.deleteTask')->form();
+        $this->client->submit($form);
+
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'Admin a bien supprimé la tâche de "Anonyme" !');
+    
+        $this->removeUser('Admin');
+    }
+
+    public function testRemoveTaskLinkedToUser(): void
+    {
+        $this->getEntityAdmin();
+        $this->loggedAsAdmin();
+        $this->getTaskLinkedToAdmin();
+
+        $urlGenerator = $this->client->getContainer()->get('router.default');
+
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_list'));
+
+        $form = $crawler->filter('.deleteTask')->form();
+        $this->client->submit($form);
+
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-success', 'La tâche a bien été supprimé !');
+
+        $this->removeUser('Admin');
+    }
+
+    public function testInvalidRemoveTaskAnonymousByUser(): void
+    {
+        $this->getAnonymousTask();
+
+        $this->loggedAsUser();
+
+        $urlGenerator = $this->client->getContainer()->get('router.default');
+
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_list'));
+
+        $form = $crawler->filter('.deleteTask')->form();
+        $this->client->submit($form);
+
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-danger', 'Vous n\'avez pas les droits pour supprimer une tache "Anonyme" !');
+    
+        $this->removeTask('titre test');
+        $this->removeUser('User');
+    }
+
+    public function testInvalidRemoveTaskLinkedToAdminByUser(): void
+    {
+        $this->loggedAsUser();
+        $this->getEntityAdmin();
+        $this->getTaskLinkedToAdmin();
+
+        $urlGenerator = $this->client->getContainer()->get('router.default');
+
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_list'));
+
+        $form = $crawler->filter('.deleteTask')->form();
+        $this->client->submit($form);
+
+        $this->assertResponseRedirects();
+        $this->client->followRedirect();
+        $this->assertRouteSame('app_task_list');
+        $this->assertSelectorTextContains('div.alert-danger', 'Vous n\'êtes pas propriétaire de cette tâche, vous ne pouvez donc pas la supprimer !');
+    
+        $this->removeTask('AdminTask');
+        $this->removeUser('User');
+        $this->removeUser('Admin');
     }
 }
