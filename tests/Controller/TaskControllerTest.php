@@ -143,6 +143,8 @@ class TaskControllerTest extends WebTestCase
     public function testEditTask(): void
     {
         $this->getAnonymousTask();
+        $this->getEntityAdmin();
+        $this->loggedAsAdmin();
 
         $toEditTask = static::getContainer()->get(TaskRepository::class)->findOneByTitle('titre test');
 
@@ -163,6 +165,8 @@ class TaskControllerTest extends WebTestCase
 
         $this->em->remove($this->em->getRepository(Task::class)->findOneByTitle('Edit du titre test'));
         $this->em->flush();
+
+        $this->removeUser('Admin');
     }
 
     public function testToggleTaskToDone()
