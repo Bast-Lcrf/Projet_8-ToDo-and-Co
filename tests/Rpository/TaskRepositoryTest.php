@@ -8,7 +8,12 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class TaskRepositoryTest extends KernelTestCase
-{
+{    
+    /**
+     * Test save a task into database using repository
+     *
+     * @return void
+     */
     public function testTaskSave()
     {
         self::bootKernel();
@@ -28,7 +33,12 @@ class TaskRepositoryTest extends KernelTestCase
 
         $this->assertNotNull($taskRepository->findOneByTitle('titre de test'));
     }
-
+    
+    /**
+     * Test remove task from databse using repository
+     *
+     * @return void
+     */
     public function testRemoveTask()
     {
         self::bootKernel();

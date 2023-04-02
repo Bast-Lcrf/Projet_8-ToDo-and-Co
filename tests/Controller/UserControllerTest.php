@@ -21,20 +21,35 @@ class UserControllerTest extends WebTestCase
         $this->repository = static::getContainer()->get('doctrine')->getRepository(User::class);
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
     }
-
+    
+    /**
+     * Logged as an admin
+     *
+     * @return void
+     */
     public function loggedAsAdmin()
     {
         $this->getEntityAdmin();
         $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('Admin');
         $this->client->loginUser($user);
     }
-
+    
+    /**
+     * Logged as a user
+     *
+     * @return void
+     */
     public function loggedAsUser()
     {
         $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('User');
         $this->client->loginUser($user);
     }
-
+    
+    /**
+     * Insert into database an entity User
+     *
+     * @return void
+     */
     public function getEntityUser()
     {
         $user = (new User())
@@ -44,7 +59,12 @@ class UserControllerTest extends WebTestCase
             ->setEmail('mailTest@mail.com');
         $this->repository->save($user, true);
     }
-
+    
+    /**
+     * Insert into database an entity Admin
+     *
+     * @return void
+     */
     public function getEntityAdmin()
     {
         $user = (new User())
@@ -54,13 +74,24 @@ class UserControllerTest extends WebTestCase
             ->setEmail('AdminMailTest@mail.com');
         $this->repository->save($user, true);
     }
-
+    
+    /**
+     * Remove from database an entity User
+     *
+     * @param  mixed $name
+     * @return void
+     */
     public function removeUser($name)
     {
         $this->em->remove($this->em->getRepository(User::class)->findOneByUsername($name));
         $this->em->flush();
     }
-
+    
+    /**
+     * Test the display of the user's list requiring an admin authorisation
+     *
+     * @return void
+     */
     public function testUsersListWithAuthorizedAccess(): void
     {
         $this->loggedAsAdmin();
@@ -71,11 +102,15 @@ class UserControllerTest extends WebTestCase
 
         $this->removeUser('Admin');
     }
-
+    
+    /**
+     * Test the display of the user's list without authorisation 
+     *
+     * @return void
+     */
     public function testUsersListUnAuthorizedAccess()
     {
         $this->getEntityUser();
-
         $this->loggedAsUser();
 
         $this->client->request(Request::METHOD_GET, 'user/list');
@@ -83,7 +118,12 @@ class UserControllerTest extends WebTestCase
 
         $this->removeUser('User');
     }
-
+    
+    /**
+     * Test creating user using form
+     *
+     * @return void
+     */
     public function testCreateUser(): void
     {
         $crawler = $this->client->request(Request::METHOD_GET, 'user/create');
@@ -105,7 +145,12 @@ class UserControllerTest extends WebTestCase
 
         $this->removeUser('TestingUserName');
     }
-
+    
+    /**
+     * Test creating an admin using form
+     *
+     * @return void
+     */
     public function testCreateAdmin(): void
     {
         $crawler = $this->client->request(Request::METHOD_GET, 'user/create');
@@ -127,7 +172,12 @@ class UserControllerTest extends WebTestCase
 
         $this->removeUser('CreateAdminForTest');
     }
-
+    
+    /**
+     * Test edit a user requiring an admin authorisation
+     *
+     * @return void
+     */
     public function testEditUser(): void
     {
         $this->loggedAsAdmin();
@@ -155,7 +205,12 @@ class UserControllerTest extends WebTestCase
         $this->removeUser('test User edit name');
         $this->removeUser('Admin');
     }
-
+    
+    /**
+     * Test edit a role from user to admin requiring an admin authorisation
+     *
+     * @return void
+     */
     public function testEditRoleAdmin(): void
     {
         $this->loggedAsAdmin();
@@ -183,7 +238,12 @@ class UserControllerTest extends WebTestCase
         $this->removeUser('test User edit name');
         $this->removeUser('Admin');
     }
-
+    
+    /**
+     * Test delete user requiring an admin authorisation
+     *
+     * @return void
+     */
     public function testDeleteUser(): void
     {
         $this->loggedAsAdmin();

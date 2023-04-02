@@ -9,7 +9,12 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 class DefaultControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
-    
+        
+    /**
+     * This controller test the display of the home page
+     *
+     * @return void
+     */
     public function testIndex()
     {
         $this->client = static::createClient();
