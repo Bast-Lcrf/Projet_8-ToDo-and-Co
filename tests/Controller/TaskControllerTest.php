@@ -23,7 +23,12 @@ class TaskControllerTest extends WebTestCase
         $this->repository = static::getContainer()->get('doctrine')->getRepository(Task::class);
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
     }
-
+    
+    /**
+     * Insert into database an Admin
+     *
+     * @return void
+     */
     public function getEntityAdmin()
     {
         $user = (new User())
@@ -33,13 +38,23 @@ class TaskControllerTest extends WebTestCase
             ->setEmail('AdminMailTest@mail.com');
         static::getContainer()->get(UserRepository::class)->save($user, true);
     }
-
+    
+    /**
+     * Logged us as an Admin
+     *
+     * @return void
+     */
     public function loggedAsAdmin()
     {
         $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('Admin');
         $this->client->loginUser($user);
     }
-
+    
+    /**
+     * Logged us as a User
+     *
+     * @return void
+     */
     public function loggedAsUser()
     {
         $user = (new User())
@@ -52,13 +67,24 @@ class TaskControllerTest extends WebTestCase
         $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('User');
         $this->client->loginUser($user);
     }
-
+    
+    /**
+     * Remove user from database
+     *
+     * @param  mixed $name
+     * @return void
+     */
     public function removeUser($name)
     {
         $this->em->remove($this->em->getRepository(User::class)->findOneByUsername($name));
         $this->em->flush();
     }
-
+    
+    /**
+     * Insert into database an anonymous task
+     *
+     * @return void
+     */
     public function getAnonymousTask()
     {
         $task = new Task();
@@ -69,7 +95,12 @@ class TaskControllerTest extends WebTestCase
         $task->setUser(null);
         $this->repository->save($task, true);
     }
-
+    
+    /**
+     * Insert into database an linked task to an admin
+     *
+     * @return void
+     */
     public function getTaskLinkedToAdmin()
     {
         $task = new Task();
@@ -80,13 +111,24 @@ class TaskControllerTest extends WebTestCase
         $task->setUser($this->em->getRepository(User::class)->findOneByUsername('Admin'));
         $this->repository->save($task, true);
     }
-
+    
+    /**
+     * Remove from database a task
+     *
+     * @param  mixed $title
+     * @return void
+     */
     public function removeTask($title)
     {
         $this->em->remove($this->em->getRepository(Task::class)->findOneByTitle($title));
         $this->em->flush();
     }
-
+    
+    /**
+     * Test the display of task list 
+     *
+     * @return void
+     */
     public function testIndexTask(): void
     {
         $urlGenerator = $this->client->getContainer()->get('router.default');
@@ -95,7 +137,12 @@ class TaskControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
         $this->assertRouteSame('app_task_list');
     }
-
+    
+    /**
+     * Test creating task linked to an admin using form 
+     *
+     * @return void
+     */
     public function testCreateTaskLinkedToAdmin(): void
     {
         $this->getEntityAdmin();
@@ -119,7 +166,12 @@ class TaskControllerTest extends WebTestCase
         $this->removeTask('testTitleTask');
         $this->removeUser('Admin');
     }
-
+    
+    /**
+     * Test creating anonymous task using form
+     *
+     * @return void
+     */
     public function testCreateTaskAnonymously()
     {
         $crawler = $this->client->request(Request::METHOD_GET, '/task/create');
@@ -139,7 +191,12 @@ class TaskControllerTest extends WebTestCase
 
         $this->removeTask('testTitleTask');
     }
-
+    
+    /**
+     * Test edit an anonymous task as an admin
+     *
+     * @return void
+     */
     public function testEditTask(): void
     {
         $this->getAnonymousTask();
@@ -168,7 +225,12 @@ class TaskControllerTest extends WebTestCase
 
         $this->removeUser('Admin');
     }
-
+    
+    /**
+     * Test toggle task from false to true
+     *
+     * @return void
+     */
     public function testToggleTaskToDone()
     {
         $this->getAnonymousTask();
@@ -186,7 +248,12 @@ class TaskControllerTest extends WebTestCase
         $this->assertRouteSame('app_task_list');
         $this->assertSelectorTextContains('div.alert-success', 'La tache à bien été marqué comme faite !');
     }
-
+    
+    /**
+     * Test toggle task from true to false
+     *
+     * @return void
+     */
     public function testToggleTaskToFalse()
     {
         $urlGenerator = $this->client->getContainer()->get('router.default');
@@ -204,7 +271,12 @@ class TaskControllerTest extends WebTestCase
 
         $this->removeTask('titre test');
     }
-
+    
+    /**
+     * Test delete anonymous task as an admin
+     *
+     * @return void
+     */
     public function testAnonymousTaskDeletedByAnAdmin(): void
     {
         $this->getAnonymousTask();
@@ -225,7 +297,12 @@ class TaskControllerTest extends WebTestCase
     
         $this->removeUser('Admin');
     }
-
+    
+    /**
+     * Test delete task linked to user
+     *
+     * @return void
+     */
     public function testRemoveTaskLinkedToUser(): void
     {
         $this->getEntityAdmin();
@@ -246,11 +323,15 @@ class TaskControllerTest extends WebTestCase
 
         $this->removeUser('Admin');
     }
-
+    
+    /**
+     * Test invalid remove anonymous task as a user 
+     *
+     * @return void
+     */
     public function testInvalidRemoveTaskAnonymousByUser(): void
     {
         $this->getAnonymousTask();
-
         $this->loggedAsUser();
 
         $urlGenerator = $this->client->getContainer()->get('router.default');
@@ -268,7 +349,12 @@ class TaskControllerTest extends WebTestCase
         $this->removeTask('titre test');
         $this->removeUser('User');
     }
-
+    
+    /**
+     * Invalid test of remove task linked to user from another user
+     *
+     * @return void
+     */
     public function testInvalidRemoveTaskLinkedToAdminByUser(): void
     {
         $this->loggedAsUser();

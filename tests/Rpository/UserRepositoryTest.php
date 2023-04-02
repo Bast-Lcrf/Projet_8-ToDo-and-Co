@@ -10,7 +10,12 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserRepositoryTest extends KernelTestCase
-{
+{    
+    /**
+     * Test save a user into the database using repository
+     *
+     * @return void
+     */
     public function testSaveUser()
     {
         self::bootKernel();
@@ -33,7 +38,12 @@ class UserRepositoryTest extends KernelTestCase
 
         $this->assertNotNull($userRepository->findOneByUsername('UserTest'));
     }
-
+    
+    /**
+     * Test remove user from database using repository
+     *
+     * @return void
+     */
     public function testRemoveUser()
     {
         self::bootKernel();

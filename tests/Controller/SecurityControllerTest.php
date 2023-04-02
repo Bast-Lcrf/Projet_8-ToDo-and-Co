@@ -21,7 +21,12 @@ class SecurityControllerTest extends WebTestCase
         $this->repository = static::getContainer()->get('doctrine')->getRepository(User::class);
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
     }
-
+    
+    /**
+     * This method allows us to insert a test user into the database
+     *
+     * @return void
+     */
     public function getEntityUser()
     {
         $user = (new User())
@@ -31,13 +36,24 @@ class SecurityControllerTest extends WebTestCase
             ->setEmail('mailTest@mail.com');
         $this->repository->save($user, true);
     }
-
+    
+    /**
+     * This method allow us to remove a user from database
+     *
+     * @param  mixed $name
+     * @return void
+     */
     public function removeUser($name)
     {
         $this->em->remove($this->em->getRepository(User::class)->findOneByUsername($name));
         $this->em->flush();
     }
-
+    
+    /**
+     * Login test with the form
+     *
+     * @return void
+     */
     public function testLogin()
     {
         $this->getEntityUser();
@@ -56,7 +72,12 @@ class SecurityControllerTest extends WebTestCase
 
         $this->assertResponseRedirects("", 302);
     }
-
+    
+    /**
+     * Logout test using the logout button
+     *
+     * @return void
+     */
     public function testLogout()
     {
         $user = static::getContainer()->get(UserRepository::class)->findOneByUsername('User');
