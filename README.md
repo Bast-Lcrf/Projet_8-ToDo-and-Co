@@ -28,7 +28,7 @@
 ## Installation
 Ouvrez une interface de commande et cloner le repository dans un dossier
 ```
-git clone https://github.com/Bast-Lcrf/Projet_7-API-BileMo
+git clone https://github.com/Bast-Lcrf/Projet_8-ToDo-and-Co
 ```
 Se placer à la racine du projet et installer tous les bundles avec la commande
 ```
