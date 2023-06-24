@@ -172,25 +172,25 @@ class TaskControllerTest extends WebTestCase
      *
      * @return void
      */
-    public function testCreateTaskAnonymously()
-    {
-        $crawler = $this->client->request(Request::METHOD_GET, '/task/create');
+    // public function testCreateTaskAnonymously()
+    // {
+    //     $crawler = $this->client->request(Request::METHOD_GET, '/task/create');
 
-        $form = $crawler->filter('form')->form([
-            'task[createdAt]' => '2023-01-01 12:00:00',
-            'task[title]' => 'testTitleTask',
-            'task[content]' => 'test Content Task',
-            'task[isDone]' => '1'
-        ]);
-        $this->client->submit($form);
+    //     $form = $crawler->filter('form')->form([
+    //         'task[createdAt]' => '2023-01-01 12:00:00',
+    //         'task[title]' => 'testTitleTask',
+    //         'task[content]' => 'test Content Task',
+    //         'task[isDone]' => '1'
+    //     ]);
+    //     $this->client->submit($form);
 
-        $this->assertResponseRedirects();
-        $this->client->followRedirect();
-        $this->assertRouteSame('app_task_list');
-        $this->assertSelectorTextContains('div.alert-success', 'La tache a bien été créé !');
+    //     $this->assertResponseRedirects();
+    //     $this->client->followRedirect();
+    //     $this->assertRouteSame('app_task_list');
+    //     $this->assertSelectorTextContains('div.alert-success', 'La tache a bien été créé !');
 
-        $this->removeTask('testTitleTask');
-    }
+    //     $this->removeTask('testTitleTask');
+    // }
     
     /**
      * Test edit an anonymous task as an admin

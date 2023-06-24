@@ -91,7 +91,6 @@ class SecurityControllerTest extends WebTestCase
         $this->client->click($link);
         $this->assertResponseRedirects("", 302);
         
-        $this->assertResponseRedirects();
         $this->client->followRedirect();
         $this->assertResponseStatusCodeSame(200);
 
