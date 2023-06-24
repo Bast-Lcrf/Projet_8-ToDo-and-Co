@@ -5,9 +5,9 @@ De ce fait, j'ai recréé un nouveau projet avec les dernières mises à jours s
 
 # Technologies
 ## Ancienne version
-* [PHP : 5.5.9](https://www.php.net/)
-* [Symfony : 3.1](https://symfony.com/doc/current/index.html)
+* [PHP:5.5.9](https://www.php.net/)
+* [Symfony:3.1](https://symfony.com/doc/current/index.html)
 
 ## Nouvelle version
-* [PHP : 8.1](https://www.php.net/)
-* [Symfony : 6.2](https://symfony.com/doc/current/index.html)
+* [PHP:8.1](https://www.php.net/)
+* [Symfony:6.2](https://symfony.com/doc/current/index.html)

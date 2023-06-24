@@ -6,7 +6,6 @@ use App\Entity\Task;
 use App\Form\TaskType;
 use App\Repository\TaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use phpDocumentor\Reflection\Types\This;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -40,7 +39,8 @@ class TaskController extends AbstractController
      * 
      * @return Response
      */
-    #[Route('/create', name: 'app_task_create', methods: ['GET', 'POST'])]  
+    #[Route('/create', name: 'app_task_create', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_USER')] 
     public function Create(Request $request, TaskRepository $taskRepository): Response
     {
         $task = new Task();
@@ -63,6 +63,7 @@ class TaskController extends AbstractController
         return $this->render('task/create.html.twig', [
             'task' => $task,
             'form' => $form,
+            'users' => $this->getUser()
         ]);
     }
 
@@ -134,6 +135,7 @@ class TaskController extends AbstractController
         return $this->render('task/edit.html.twig', [
             'task' => $task,
             'form' => $form,
+            'users' => $this->getUser()
         ]);
     }
 

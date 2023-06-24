@@ -4,14 +4,14 @@
     {% if error %}
         <div class="alert alert-danger" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
     {% endif %}
-
+<h1 style="margin-left:20px">Formulaire de connexion :</h1>
     <form action="{{ path('app_security_login') }}" method="post">
-        <label for="username">Nom d'utilisateur :</label>
-        <input type="text" id="username" name="_username" value="{{ last_username }}" />
+        <label style="margin-left:50px" for="username">Nom d'utilisateur :</label>&nbsp;
+        <input type="text" id="username" name="_username" value="{{ last_username }}" />&emsp;
 
-        <label for="password">Mot de passe :</label>
-        <input type="password" id="password" name="_password" />
+        <label for="password">Mot de passe :</label>&nbsp;
+        <input type="password" id="password" name="_password" />&emsp;
 
-        <button class="btn btn-success" type="submit">Se connecter</button>
+        <button class="btn btn-success btnLogin" type="submit">Se connecter</button>
     </form>
 {% endblock %}
