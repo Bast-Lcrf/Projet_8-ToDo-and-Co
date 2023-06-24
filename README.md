@@ -30,16 +30,19 @@ Ouvrez une interface de commande et cloner le repository dans un dossier
 ```
 git clone https://github.com/Bast-Lcrf/Projet_8-ToDo-and-Co
 ```
+
+Faire une copie de votre fichier ```.env``` que vous renommez en ```.env.local``` et modifier la partie ```DATABASE_URL``` avec vos informations de base de données (nom d'utilisateur, mot de passe, nom de la bdd, etc)
+
 Se placer à la racine du projet et installer tous les bundles avec la commande
 ```
 php composer.phar install
 ```
-Faire une copie de votre fichier ```.env``` que vous renommez en ```.env.local``` et modifier la partie ```DATABASE_URL``` avec vos informations de base de données (nom d'utilisateur, mot de passe, nom de la bdd, etc)
 
 Faire la commande suivante pour créer la base de données
 ```
 php bin/console doctrine:schema:create
 ```
+
 Une fois ces étapes réalisées, lancer MAMPServer puis faite  ```symfony server:start -d``` en ligne de commande a la racine du projet.
 
 Page d'acceuil: ```http://127.0.0.1:8000/```
