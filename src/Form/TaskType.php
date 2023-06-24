@@ -40,7 +40,8 @@ class TaskType extends AbstractType
             ])
             ->add('content', TextareaType::class, [
                 'attr' => [
-                    'class' => 'form-control'
+                    'class' => 'form-control',
+                    'rows' => 10
                 ],
                 'label' => 'Contenu de la tache :',
                 'label_attr' => [

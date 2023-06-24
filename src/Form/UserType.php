@@ -12,6 +12,7 @@ use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 class UserType extends AbstractType
 {
@@ -87,7 +88,19 @@ class UserType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => User::class,
+            // 'data_class' => User::class,
+            'constraints' => [
+                new UniqueEntity([
+                    'entityClass' => User::class,
+                    'fields' => 'username',
+                    'message' => 'Ce nom d\'utilisateur n\'est pas disponible'
+                ]),
+                new UniqueEntity([
+                    'entityClass' => User::class,
+                    'fields' => 'email',
+                    'message' => 'Cette adresse email existe déjà'
+                ]),
+            ]
         ]);
     }
 }

@@ -1,7 +1,13 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
+    {% if app.user %}
+        <div>
+            <h4 class="connected"><strong>{{ users.username }}</strong><div class="connected_circle"></div></h4>
+        </div>
+    {% endif %}
     <div class="row">
+        <h1>Formulaire de modification de la tâche : {{ task.title }}</h1>
         {{ form_start(form, {'action' : path('app_task_edit', { 'id' : task.id })}) }}
             {{ form_widget(form) }}
 

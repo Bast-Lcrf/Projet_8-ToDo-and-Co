@@ -4,6 +4,11 @@
 {% block header_img %}{% endblock %}
 
 {% block body %}
+    {% if app.user %}
+        <div>
+            <h4 class="connected"><strong>{{ users.username }}</strong><div class="connected_circle"></div></h4>
+        </div>
+    {% endif %}
     <div class="row">
         {{ form_start(form) }}
             {{ form_widget(form) }}

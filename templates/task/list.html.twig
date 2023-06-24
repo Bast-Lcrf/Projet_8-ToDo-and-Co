@@ -3,14 +3,14 @@
 {% block header_img %}
     {% if app.user %}
         <div>
-            <h4 style="color: green">Vous êtes connecter en tant que : <strong>{{ users.username }}</strong></h4>
+            <h4 class="connected"><strong>{{ users.username }}</strong><div class="connected_circle"></div></h4>
         </div>
     {% endif %}
     <img class="slide-image" src="{{ asset('img/todolist_content.jpg') }}" alt="todo list">
 {% endblock %}
 
 {% block body %}
-    <a href="{{ path('app_task_create') }}" class="btn btn-info pull-right">Créer une tâche</a>
+    <a href="{{ path('app_task_create') }}" class="btn btn-success pull-right">Créer une tâche</a>
 
     {% for message in app.flashes('success') %}
         <div class="alert alert-success mt-4">
@@ -36,7 +36,8 @@
                             <i class='bx bx-x'></i>
                         {% endif %}
                     </h4>
-                    <h4><a href="{{ path('app_task_edit', {'id' : task.id }) }}">{{ task.title }}</a></h4>
+                    <h4 class="title">{{ task.title }}</h4>
+                    <a class="updateTask" href="{{ path('app_task_edit', {'id' : task.id }) }}"><i class='bx bxs-edit-alt'></i></a>
                     <p>{{ task.content }}</p>
                     <h4> Créé par :
                         {% if task.user is null %}
@@ -56,7 +57,7 @@
                             {% endif %}
                         </button>
                     </form>
-                    <form class="deleteTask" method="post" action="{{ path('app_task_delete', {'id' : task.id }) }}">
+                    <form class="deleteTask" method="post" action="{{ path('app_task_delete', {'id' : task.id }) }}" onsubmit="return confirm('Supprimer cette tâche ?');">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ task.id) }}">
                         <button class="btn btn-danger btn-sm pull-right">Supprimer</button>
                     </form>

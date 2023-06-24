@@ -3,7 +3,7 @@
 {% block header_title %}
     {% if app.user %}
         <div>
-            <h4 style="color: green">Vous êtes connecter en tant que : <strong>{{ users.username }}</strong></h4>
+            <h4 class="connected"><strong>{{ users.username }}</strong><div class="connected_circle"></div></h4>
         </div>
     {% endif %}
     <h1>Bienvenue sur Todo List, l'application vous permettant de gérer l'ensemble de vos tâches sans effort !</h1>

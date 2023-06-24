@@ -5,6 +5,11 @@
 {% block header_title %}<h1>Liste des utilisateurs</h1>{% endblock %}
 
 {% block body %}
+    {% if app.user %}
+        <div>
+            <h4 class="connected"><strong>{{ users.username }}</strong><div class="connected_circle"></div></h4>
+        </div>
+    {% endif %}
     {% if user|length == 0 %}
         <div class="alert alert-warning" role="alert">
             Il n'y a pas encore d'utilisateur enregistré. <a href="{{ path('user_create') }}" class="btn btn-warning pull-right">Créer un utilisateur</a>
@@ -28,7 +33,7 @@
                         <td>{{ user.email }}</td>
                         <td>
                             <a href="{{ path('app_user_edit', {'id' : user.id}) }}" class="btn edit-user">Edit</a>
-                            <form class="deleteUser" method="post" action="{{ path('app_user_delete', {id: user.id}) }}">
+                            <form class="deleteUser" method="post" action="{{ path('app_user_delete', {id: user.id}) }}" onsubmit="return confirm('Supprimer cette utilisateur ?');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
                                 <button class="btn btn-danger">Supprimer</button>
                             </form>
