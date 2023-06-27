@@ -170,6 +170,10 @@ h1 {
     margin-top: 2%;
 }
 
+.alert-success, .alert-danger {
+    transform: translateY(50%);
+}
+
 footer {
     margin: 50px 0;
 }
